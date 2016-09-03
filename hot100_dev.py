@@ -151,7 +151,7 @@ plt.xticks(range(1,19))
 
 trajectories = pd.DataFrame()
 
-for name in num_years[num_years > 5].index:
+for name in num_years[num_years > 0].index:
     entries = data[data.name == name]
     entries.sort_values('year')
 #    plt.figure()
@@ -171,13 +171,35 @@ for name in num_years[num_years > 5].index:
     to_add.loc[:,'year'] = trajectory.index+np.min(entries.year) - 1
     trajectories = trajectories.append(to_add)
     
-    plt.figure()
-    plt.plot(trajectory.index,normalized_trajectory,'.',markersize=25)
-    plt.title('%s (%d entries, mean rank %.1f)' % (name, len(entries), np.mean(trajectory)))
-    plt.ylim([0,1])
-    plt.xlim([1,17])
-    plt.xticks(range(1,17))
+#    plt.figure()
+#    plt.plot(trajectory.index,normalized_trajectory,'.',markersize=25)
+#    plt.title('%s (%d entries, mean rank %.1f)' % (name, len(entries), np.mean(trajectory)))
+#    plt.ylim([0,1])
+#    plt.xlim([1,17])
+#    plt.xticks(range(1,17))
  
+#%%
+start_year =  pd.DataFrame(with_ages.groupby('name').min()['year'])
+start_year.columns = [u'start_year']
+#%%
+with_ages = with_ages.merge(start_year,left_on='name',right_index=True)
+with_ages.loc[:,'year_of_run'] = 1+ with_ages.loc[:,'year']- with_ages.loc[:,'start_year']
+by_year_of_run = with_ages.pivot_table(values='mrank',index='name',columns='year_of_run')
+#%%
+yor_means = by_year_of_run.mean(axis=0)
+yor_stds = by_year_of_run.std(axis=0)
+yor_cis = 1.96*  (yor_stds/np.sqrt( by_year_of_run.count(axis=0)))
+plt.errorbar(range(1,18),yor_means.values,yerr=yor_cis.values)
+
+#%%
+# Build a table that for each person at each age, lists whether they will ever appear on the hot 100 again
+by_age_at_time = with_ages.pivot_table(values='mrank',index='name',columns='age_at_time')
+will_appear_again = by_age_at_time.copy()
+for coli in np.flipud(range(len(will_appear_again.columns)-1)):
+    will_appear_again.iloc[:,coli] = (will_appear_again.iloc[:,coli+1] > 0) | (by_age_at_time.iloc[:,coli+1] > 0)
+#%%
+waa_means = will_appear_again.mean(axis=0)
+plt.plot(waa_means)
 #%%
 
 plt.figure()

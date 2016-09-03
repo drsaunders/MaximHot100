@@ -179,7 +179,7 @@ print '%d out of %d with unambiguous birthdates (%.1f%%)' % (len(person_info), l
 
 # I lost quite a few, but there's still plenty left, and little reason to think any group was systematically excluded (except possibly people with special unicode characters in their name, which is a real concern for names of non-English origin). The next step is to parse the years, and then compute the age at the time of each list, by merging it with the overall lists.
 
-# In[6]:
+# In[141]:
 
 #%%
 # Parse the date and extract the year
@@ -193,10 +193,10 @@ with_ages = data.merge(person_info, how='right', left_on='name', right_index=Tru
 
 # Then I can compute the age at the time of appearance on the list, and look at the basic distribution of ages.
 
-# In[62]:
+# In[338]:
 
 with_ages.loc[:,'age_at_time'] = with_ages.year - with_ages.birth_year              
-sns.distplot(with_ages.age_at_time,kde=False,bins=range(10,51), hist_kws=hist_keywords)
+sns.distplot(with_ages.age_at_time, kde=False, bins=range(10,51), hist_kws=hist_keywords)
 plt.xlim([15,50])
 plt.xlabel('Age at appearance on Hot 100')
 print with_ages.age_at_time.describe()
@@ -211,7 +211,7 @@ print "Appearances on the Hot 100 by people over 41 (some people appear multiple
 with_ages.loc[with_ages.age_at_time > 41,['name','year','age_at_time']].sort_values('age_at_time')
 
 
-# Yes, that's Stephen Colbert in there. Which I didn't notice until my friend pointed it out. It turns out this is the result of democracy: [Stephen Colbert was a write-in candidate](http://usatoday30.usatoday.com/life/people/story/2012-05-21/Maxim-Hot-100/55112690/1), and the first (and I believe only) man to appear on the list. It seems that contrary to my initial assumption (which, to be fair, was based on the text on their own web pages), voting only began with the 2012 Hot 100 list. Other surprising entries on 2012's list: [Amanda Knox and Lois Griffin (from Family Guy)](http://www.afterellen.com/people/101333-maxims-hot-100-gets-better-when-real-people-vote). My age analyses includes the former but not the latter. More about how things may have changed with reader input starting in 2012 later.
+# Yes, that's Stephen Colbert in there. Which I didn't notice until my friend pointed it out! It turns out this is the result of democracy: [Stephen Colbert was a write-in candidate](http://usatoday30.usatoday.com/life/people/story/2012-05-21/Maxim-Hot-100/55112690/1), and the first (and I believe only) man to appear on the list. It seems that contrary to my initial assumption (which, to be fair, was based on the text on their own web pages), voting only began with the 2012 Hot 100 list. Other surprising entries on 2012's list: [Amanda Knox and Lois Griffin (from Family Guy)](http://www.afterellen.com/people/101333-maxims-hot-100-gets-better-when-real-people-vote). My age analyses includes the former but not the latter. More about how things may have changed with reader input starting in 2012 later.
 # 
 # With this data we can look at age extremes:
 
@@ -350,6 +350,166 @@ plt.figure()
 sns.pointplot(x='year',y='trans',data=with_ages, ci = 0, color=sns.xkcd_rgb["purple"], estimator=np.nansum)
 plt.ylabel('Number of transgender people in Hot 100')
 
+
+# ## Hot 100 "career" trajectory
+# I've drifted away from my initial whole motivation for this analysis, which is to see how people rise in "hotness" and then drop off again as they age out. So I looked at rankings by year of their Hot 100 run, but to my surprise saw a great variety of patterns, not at all the regular parabola I was expecting. 
+
+# In[ ]:
+
+# Compute new year of run column
+start_year =  pd.DataFrame(with_ages.groupby('name').min()['year'])
+start_year.columns = [u'start_year']
+
+with_ages = with_ages.merge(start_year,left_on='name',right_index=True)
+
+with_ages.loc[:,'year_of_run'] = 1+ with_ages.loc[:,'year']- with_ages.loc[:,'start_year']
+by_year_of_run = with_ages.pivot_table(values='mrank',index='name',columns='year_of_run')
+
+
+# For example, Cameron Diaz, who I touched on a bit earlier, has something of the parabola, but then a huge comeback in her 8th year:
+
+# In[292]:
+
+def plot_trajectory(name, by_year_of_run, start_year):
+    trajectory = by_year_of_run.loc[name][:(by_year_of_run.loc[name].last_valid_index())]
+    x = trajectory.index.values #+ start_year.loc[name][0] - 1
+    plt.figure(figsize=[10,4])
+    plt.plot(x, trajectory, '.-', markersize=20, color=maxim_red)
+    plt.xticks(x,[str(a) for a in x])
+    plt.xlim([np.min(x)-0.5, np.max(x)+0.5])
+    plt.ylim([0,100])
+    plt.gca().invert_yaxis()
+    plt.xlabel('Year of run')
+    plt.ylabel('Hot 100 ranking')
+    plt.title(name)
+
+plot_trajectory('Cameron Diaz', by_year_of_run, start_year)
+
+
+# While Zooey Deschanel is even more random:
+
+# In[293]:
+
+plot_trajectory('Zooey Deschanel', by_year_of_run, start_year)
+
+
+# And peeking at a random selection of people with long-ish runs, I do see some evidence of a rise and a dropoff, but far from predictably, and with plenty of years where that person is forgotten completely, then jumps back up to a high ranking. Having consecutive years is far from a given, no matter how high you placed. 
+
+# In[340]:
+
+plot_trajectory('Jessica Alba', by_year_of_run, start_year)
+plot_trajectory('Jennifer Lopez', by_year_of_run, start_year)
+plot_trajectory('Jennifer Love Hewitt', by_year_of_run, start_year)
+plot_trajectory('Zoe Saldana', by_year_of_run, start_year)
+plot_trajectory('Milla Jovovich', by_year_of_run, start_year)
+
+
+# The most extreme example of a comeback is not Cameron Diaz but the Brazilian model Ana Beatriz Barros, who appeared on the list at the age of 18 and 19, and then not again until she was 34!
+
+# In[303]:
+
+plot_trajectory('Ana Beatriz Barros', by_year_of_run, start_year)
+
+
+# As I observed earlier, this chaos is probably the result of different publicity campaigns putting women in the spotlight as much as any inherent quality they have, once again demonstrating how uncontrollable fame and admiration can be.
+# 
+# The fact that it's very hard to predict the length of one's Maxim career, even ignoring gaps, can be seen in the average across people. 
+
+# In[341]:
+
+#%%
+# Average across all people's runs, ignoring missing years
+yor_means = by_year_of_run.mean(axis=0)
+yor_stds = by_year_of_run.std(axis=0)
+yor_cis = 1.96*  (yor_stds/np.sqrt( by_year_of_run.count(axis=0)))
+plt.errorbar(range(1,18),yor_means.values, yor_cis.values,marker='.', markersize=15, color=maxim_red)
+plt.ylim([0,100])
+plt.gca().invert_yaxis()
+plt.ylabel('Mean rank')
+plt.xlabel('Year of run')
+
+
+# As long as you stay on the chart, you rise an average of 20 spots over your first couple of years, but after that all bets are off. If you manage to appear for a span of over 10 years - as only 21 people managed to do - your ranking is likely fairly high.
+# 
+# However I get a different picture if I also incorporate information about people falling off the chart, which I do by assigning them a rank of 101 for that year - based on the fact that they are at least that low in their "real" hotness ranking. From this it's quite clear that you're likely to go downhill from your first appearance, although with each subsequent appearance your chances are a little bit better of coming back.
+
+# In[343]:
+
+#%%
+# Average across all people's runs, replacing missing years with a rank of 101
+by_year_of_run_filled = by_year_of_run.fillna(101)
+yor_means = by_year_of_run_filled.mean(axis=0)
+yor_stds = by_year_of_run_filled.std(axis=0)
+yor_cis = 1.96*  (yor_stds/np.sqrt( by_year_of_run_filled.count(axis=0)))
+plt.errorbar(range(1,18),yor_means.values, yor_cis.values,marker='.',markersize=15,color=maxim_red)
+#plt.ylim([0,100])
+plt.gca().invert_yaxis()
+plt.ylabel('Mean rank (non-appearances = 101)')
+plt.xlabel('Year of run')
+
+
+# But it's time to bring age back into it. There are a lot of ways I could ask this question, but first I'm putting it like this: If you are a certain age and have ever appeared on the Maxim 100 chart, what are your chances of ever appearing again? 
+
+# In[325]:
+
+#%%
+# Build a table that for each person at each age, lists whether they will ever appear on the hot 100 again
+by_age_at_time = with_ages.pivot_table(values='mrank',index='name',columns='age_at_time')
+will_appear_again = by_age_at_time.copy()
+for coli in np.flipud(range(len(will_appear_again.columns)-1)):
+    will_appear_again.iloc[:,coli] = (will_appear_again.iloc[:,coli+1] > 0) | (by_age_at_time.iloc[:,coli+1] > 0)
+will_appear_again = will_appear_again.iloc[:,:-1]
+
+waa_means = will_appear_again.mean(axis=0)
+plt.plot(waa_means,'.',markersize=20, color=maxim_red)
+plt.xlabel('Age')
+plt.ylabel('Probability of ever appearing again on the Hot 100')
+#waa_cis = 1.96*prop_stderr(waa_means, will_appear_again.count(axis=0))
+#plt.errorbar(waa_means.index,waa_means.values, waa_cis.values, marker='.',markersize=15)
+
+
+# Clearly, by the time you reach 40, you shouldn't be waiting by the phone for Maxim to call. A subtly different question to ask, that might be better, is: *Given that you are appearing* on the Maxim chart at a certain age, what is the probability you will ever be invited back?
+
+# In[324]:
+
+will_appear_again[np.isnan(by_age_at_time)]=np.nan
+waa_means = will_appear_again.mean(axis=0)
+plt.plot(waa_means,'.',markersize=20, color=maxim_red)
+plt.xlabel('Age at appearance')
+plt.ylabel('Probability of ever appearing again on the Hot 100')
+
+
+# It's a bit more noisy, and a bit more promising for the over-35 crowd (the ones that are left). That blip at 43 is Jennifer Lopez, who then went on to appear at age 45! The solitary other 43 year old didn't make it.
+# 
+# Finally, to connect the trajectory idea with the age at appearance data, I brought back in rank: for different ages, what are the chances that you will rank higher in the future? I can look at this two ways. One which counts "falling off the chart" as ranking lower:
+
+# In[336]:
+
+min_mrank_ahead = by_age_at_time.copy()
+for coli in np.flipud(range(len(min_mrank_ahead.columns)-1)):
+    min_mrank_ahead.iloc[:,coli] = np.nanmin([min_mrank_ahead.iloc[:,coli+1],by_age_at_time.iloc[:,coli+1]],0)
+
+
+will_get_better_ranking = by_age_at_time > min_mrank_ahead
+will_get_better_ranking[np.isnan(by_age_at_time)]=np.nan
+wgb_means = will_get_better_ranking.mean(axis=0)
+plt.plot(wgb_means.iloc[:-1],'.',markersize=20, color=maxim_red) # Snip off the last entry because it's meaningless
+plt.xlabel('Age at appearance')
+plt.ylabel('Probability of ranking higher on the Hot 100')
+
+
+# Now an alternative which asks, *assuming you will appear again* what is your probability of ranking higher?
+
+# In[335]:
+
+will_get_better_ranking[np.isnan(min_mrank_ahead)]=np.nan
+wgb_means = will_get_better_ranking.mean(axis=0)
+plt.plot(wgb_means.iloc[:-1],'.',markersize=20, color=maxim_red)
+plt.xlabel('Age at appearance')
+plt.ylabel('Probability of ranking higher (given future appearance)')
+
+
+# So you are more than 50% likely to climb up the charts in a future appearance - if you are under 35 or so. (that blip at 43 is Jennifer Lopez again, who ranked higher at 45!) Of course your chances of ever appearing again have dropped to about 50% at this point. 
 
 # In[ ]:
 
