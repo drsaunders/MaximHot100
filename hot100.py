@@ -21,9 +21,9 @@ maxim_red = [0.65,0,0.02]
 
 # # Analysis of Maxim Magazine's Hot 100
 # ## *or: The "Last Fuckable Day" According to 16-Year-Old Bros, 2000-2016*
-# In Amy Schumer's brutally satirical sketch "[Last Fuckable Day](https://www.youtube.com/watch?v=XPpsI8mWKmg)", "In every actress's life, the media decides when you finally reach the point where you're not believably fuckable anymore," Particularly in Hollywood, it's a [real thing](http://www.laweekly.com/news/how-hollywood-keeps-out-the-stories-of-women-and-girls-6277451)
+# In Amy Schumer's brutally satirical sketch "[Last Fuckable Day](https://www.youtube.com/watch?v=XPpsI8mWKmg)", Patricia Arquette explains the concept: "In every actress's life, the media decides when you finally reach the point where you're not believably fuckable anymore," Particularly in Hollywood, it's a [real thing](http://www.laweekly.com/news/how-hollywood-keeps-out-the-stories-of-women-and-girls-6277451).
 # 
-# When I think about that emphemeral quality, let's call it "hotness" instead, it makes me think of Maxim Magazine. When I was a teenager, some of my friends had copies of the recently-launched Maxim Magazine, a north american version of what are called in England "lad magazines". Issues mixed "how to be a man" articles and product reviews with teasing photoshoots of famous actresses, musicians, and models, in their underwear or bikinis. Needless to say, the internet made this magazine less relevant.
+# When I think about that emphemeral quality, let's use the word "hotness" instead, it makes me think of Maxim Magazine. When I was a teenager, some of my friends had copies of the recently-launched Maxim Magazine, a North American version of what are called in England "lad magazines". Issues mixed "how to be a man" articles and product reviews with teasing photoshoots of famous actresses, musicians, and models, in their underwear or bikinis. Needless to say, the internet made this magazine less relevant.
 # 
 # I vaguely remembered that they listed the 100 hottest women every year, just to make the whole thing more gross. But if we assume that media executives are often trying to sell things to 16-year-old, conventional, hetero, North American boys - and often have the same mentality themselves - then the Hot 100 lists should give insight into this very specific concept of "hotness".
 # 
@@ -301,13 +301,14 @@ plt.xlabel('Publication year')
 plt.ylim([0,1])
 
 
-# Interestingly, this appears to have been stable over many years, at about 75% U.S. born, but in the last two years fell off a cliff. Does this affect changing readership? (perhaps the online edition is popular in more countries, so the Hot 100 has to reflect a global consensus?) Or changing sensibilities? (are American readers more aware of attractive celebrities from elsewhere in the world, perhaps thanks to social media?) Or is it 
+# Interestingly, this appears to have been stable over many years, at about 75% U.S. born, but in the last two years fell off a cliff. Does this affect changing readership? (perhaps the online edition is popular in more countries, so the Hot 100 has to reflect a global consensus?) Or changing sensibilities? (are American readers more aware of attractive celebrities from elsewhere in the world, perhaps thanks to social media?) Or is it a result of including reader online feedback as of 2012? The only way I could explain it having a delayed effect is if the editors gradually titrated more reader influence - maybe taking the time to figure out how to filter out entries such as Betty Rubble.
 # 
 # This trend is less dramatic for the top 10, but looking at the raw numbers, only 1 out of 2016's top 10 was born in America!
 
 # In[126]:
 
 #%%
+# US-born top 10
 plt.figure()
 sns.pointplot(x='year',y='us_born',data=with_ages.loc[(with_ages.mrank<=10) ,:], ci=0, color=sns.xkcd_rgb["violet"], estimator=np.nansum)
 plt.xlabel('Publication year')
@@ -322,7 +323,7 @@ with_ages.loc[(with_ages.mrank<=10) & (with_ages.year==2016),['name','mrank','us
 
 # (incidentally I only recognize two of those names!)
 # 
-# Finally, I was curious about if more openly lesbian and bisexual women were on the list in recent years, due to changing sensibilities. I drew from Wikipedia category data, since a quick check indicated that most celebrities who are publicly gay are listed under "Lesbian actresses", "LGBT people from New Hampshire" etc. (one false positive I had to avoid: "LGBT activists") Just searching the text of the whole Wikipedia page for "lesbian" produced too many false positives, since many actresses had played lesbian roles.
+# Finally, I was curious about if more openly lesbian and bisexual women were on the list in recent years, due to changing sensibilities. I drew from Wikipedia category data, since a quick check indicated that most celebrities who are publicly gay are listed under "Lesbian actresses", "LGBT people from New Hampshire" etc. (one false positive I had to avoid: "LGBT rights activists") Just searching the text of the whole Wikipedia page for "lesbian" produced too many false positives, since many actresses had played lesbian roles.
 # 
 # The answer for people who identify exclusively as lesbian is exactly 1: Portia de Rossi, who made the Hot 100 in 2000 and 2004 (both before she came out of the closet in 2005). So the rest are people who have self-identified as bisexual (or are identified as such by others due to having had relationships with women). Because there's so few, it's easy to look at raw numbers (out of 100) for each year.
 
@@ -468,7 +469,9 @@ plt.ylabel('Probability of ever appearing again on the Hot 100')
 #plt.errorbar(waa_means.index,waa_means.values, waa_cis.values, marker='.',markersize=15)
 
 
-# Clearly, by the time you reach 40, you shouldn't be waiting by the phone for Maxim to call. A subtly different question to ask, that might be better, is: *Given that you are appearing* on the Maxim chart at a certain age, what is the probability you will ever be invited back?
+# Clearly, by the time you reach 40, you shouldn't be waiting by the phone for Maxim to call. 
+# 
+# Of course, this shape could be easily predicted from the histogram of ages, which peaked at 26. A subtly different question to ask, that might be better, is: *Given that you are appearing* on the Maxim chart at a certain age, what is the probability you will ever be invited back?
 
 # In[324]:
 
